@@ -413,6 +413,7 @@ fn contributed_options_are_labs_toggles_off_by_default() {
         "lab-spoken-formatting",
         "lab-filler-words",
         "lab-spoken-symbols",
+        "lab-voice-prompt",
         "lab-caps-lock-dictation",
     ] {
         assert!(rt.find(row).is_some(), "Labs lacks {row}");
@@ -423,6 +424,9 @@ fn contributed_options_are_labs_toggles_off_by_default() {
     assert!(!rt.state.settings.labs.spoken_symbols);
     tap(&mut rt, "lab-spoken-symbols");
     assert!(rt.state.settings.labs.spoken_symbols);
+    assert!(!rt.state.settings.labs.voice_prompt);
+    tap(&mut rt, "lab-voice-prompt");
+    assert!(rt.state.settings.labs.voice_prompt);
     assert!(!rt.state.settings.labs.filler_words);
     tap(&mut rt, "lab-filler-words");
     assert!(rt.state.settings.labs.filler_words);

@@ -70,6 +70,7 @@ impl Feature {
             Self::SmartSpacing
             | Self::SpokenFormatting
             | Self::SpokenSymbols
+            | Self::VoicePrompt
             | Self::FillerWords
             | Self::KeepOnClipboard
             | Self::CopyOnly

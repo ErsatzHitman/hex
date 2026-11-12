@@ -319,6 +319,19 @@ pub fn print_start() -> bool {
     PRINT_START.load(Ordering::Acquire) && Feature::PrintStart.on_this_os()
 }
 
+/// Labs › Voice prompt: the phrase whose following words become a prompt
+/// for the OpenCode model, while the lab is on (every OS; read as each
+/// dictation's processing starts).
+pub fn voice_prompt_phrase() -> Option<String> {
+    // Its own lock, written by `labs::apply`, and loaded here first in a
+    // process that never applied.
+    let _ = state();
+    VOICE_PROMPT_PHRASE
+        .read()
+        .unwrap_or_else(|error| error.into_inner())
+        .clone()
+}
+
 /// Whether the Caps Lock light blinks slowly while recording instead of
 /// staying solid (macOS; read by the light model for each pattern).
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]

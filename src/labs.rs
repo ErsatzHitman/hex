@@ -166,6 +166,7 @@ impl Feature {
             | Self::SpeakersOnly
             | Self::PauseMenu
             | Self::PrintStart
+            | Self::VoicePrompt
             | Self::MoreDictationShortcuts => Audience::Everyone,
         }
     }
@@ -245,6 +246,7 @@ impl Feature {
             | Self::PauseMenu
             | Self::HistoryMultiSelect => 20261110,
             Self::KeepMicrophoneOpen | Self::PrintStart => 20261111,
+            Self::VoicePrompt => 20261112,
         }
     }
 
@@ -344,6 +346,7 @@ impl Feature {
             | Self::KeepOnClipboard
             | Self::SpokenFormatting
             | Self::SpokenSymbols
+            | Self::VoicePrompt
             | Self::PickerSortFilter
             | Self::BenchmarkDetails
             | Self::ParakeetUltra
@@ -449,6 +452,7 @@ impl Feature {
             Self::SpeakersOnly => "speakers-only",
             Self::PauseMenu => "pause-menu",
             Self::PrintStart => "print-start",
+            Self::VoicePrompt => "voice-prompt",
             Self::MoreDictationShortcuts => "more-dictation-shortcuts",
         }
     }
@@ -530,6 +534,7 @@ impl Feature {
             Self::SpeakersOnly => "labs.speakers_only",
             Self::PauseMenu => "labs.pause_menu",
             Self::PrintStart => "labs.print_start",
+            Self::VoicePrompt => "labs.voice_prompt",
             Self::MoreDictationShortcuts => "labs.more_dictation_shortcuts",
         }
     }
@@ -615,6 +620,7 @@ impl Feature {
             Self::SpeakersOnly => settings.labs.speakers_only,
             Self::PauseMenu => settings.labs.pause_menu,
             Self::PrintStart => settings.labs.print_start,
+            Self::VoicePrompt => settings.labs.voice_prompt,
             Self::MoreDictationShortcuts => settings.labs.more_dictation_shortcuts,
         }
     }
@@ -698,6 +704,7 @@ impl Feature {
             &mut labs.app_model_switching,
             &mut labs.pause_menu,
             &mut labs.print_start,
+            &mut labs.voice_prompt,
             &mut labs.more_dictation_shortcuts,
         ]
     }
@@ -786,6 +793,7 @@ impl Feature {
             Self::SpeakersOnly => settings.labs.speakers_only = on,
             Self::PauseMenu => settings.labs.pause_menu = on,
             Self::PrintStart => settings.labs.print_start = on,
+            Self::VoicePrompt => settings.labs.voice_prompt = on,
             Self::MoreDictationShortcuts => settings.labs.more_dictation_shortcuts = on,
             // Off, no shortcut keeps a key only the feature allows.
             Self::StandaloneSpecialKeys => {
@@ -910,6 +918,11 @@ static MICROPHONE_LINGER_SECONDS: AtomicU64 = AtomicU64::new(0);
 /// own atomic, written by [`state`] and [`apply`].
 static PRINT_START: AtomicBool = AtomicBool::new(false);
 
+/// Labs › Voice prompt's phrase while the lab is on, set beside [`STATE`] by
+/// [`state`] and [`apply`]: `None` while it is off. The state word is full
+/// and the phrase is text, so it has its own lock.
+static VOICE_PROMPT_PHRASE: std::sync::RwLock<Option<String>> = std::sync::RwLock::new(None);
+
 fn on(bit: u64) -> bool {
     state() & bit != 0
 }
@@ -927,6 +940,7 @@ fn state() -> u64 {
                 // as off, and the next read is right.
                 MICROPHONE_LINGER_SECONDS.store(linger_seconds(&saved), Ordering::Release);
                 PRINT_START.store(print_start_enabled(&saved), Ordering::Release);
+                store_voice_prompt_phrase(&saved);
             }
             STATE.load(Ordering::Acquire)
         }
@@ -945,6 +959,21 @@ fn linger_seconds(settings: &LabsSettings) -> u64 {
 /// before its managed lock; the state word has no bit for it.
 fn print_start_enabled(settings: &LabsSettings) -> bool {
     settings.print_start && Feature::PrintStart.shipped() && Feature::PrintStart.managed().is_none()
+}
+
+/// The phrase Labs › Voice prompt listens for when `settings` turn it on in
+/// this build and no managed lock holds it off.
+fn voice_prompt_phrase_for(settings: &LabsSettings) -> Option<String> {
+    (settings.voice_prompt
+        && Feature::VoicePrompt.shipped()
+        && Feature::VoicePrompt.managed().is_none())
+    .then(|| settings.voice_prompt_phrase.trim().to_owned())
+}
+
+fn store_voice_prompt_phrase(settings: &LabsSettings) {
+    *VOICE_PROMPT_PHRASE
+        .write()
+        .unwrap_or_else(|error| error.into_inner()) = voice_prompt_phrase_for(settings);
 }
 
 /// Whether the main window draws dark: the OS's appearance, unless Labs ›
@@ -970,6 +999,7 @@ pub(crate) fn apply(settings: &LabsSettings) {
     STATE.store(encode(settings), Ordering::Release);
     MICROPHONE_LINGER_SECONDS.store(linger_seconds(settings), Ordering::Release);
     PRINT_START.store(print_start_enabled(settings), Ordering::Release);
+    store_voice_prompt_phrase(settings);
     // Labs › Pause from menu bar: turning it off resumes at once, without
     // waiting for the menu to refresh; the menu row hides itself there.
     crate::shortcut_pause::reconcile(pause_menu());
@@ -1932,6 +1962,31 @@ mod tests {
         assert_eq!(Feature::PrintStart.group(), Group::Output);
         assert_eq!(Feature::PrintStart.settings_key(), "labs.print_start");
         assert_eq!(Feature::PrintStart.name(), "print-start");
+    }
+
+    #[test]
+    fn voice_prompt_holds_its_phrase_and_is_on_every_os() {
+        let mut labs = LabsSettings::default();
+        assert_eq!(labs.voice_prompt_phrase, "rewrite this");
+        assert_eq!(voice_prompt_phrase_for(&labs), None, "off by default");
+        labs.voice_prompt = true;
+        labs.voice_prompt_phrase = "  hey hex rewrite ".into();
+        assert_eq!(
+            voice_prompt_phrase_for(&labs).as_deref(),
+            Some("hey hex rewrite")
+        );
+        // The state word has no bit for it.
+        let state = encode_where(&labs, |_| true);
+        assert_eq!(state & PAUSE_MENU, 0);
+        assert!(Feature::VoicePrompt.on_this_os());
+        assert_eq!(Feature::VoicePrompt.added(), 20261112);
+        assert_eq!(Feature::VoicePrompt.audience(), Audience::Everyone);
+        assert_eq!(Feature::VoicePrompt.group(), Group::Output);
+        assert_eq!(Feature::VoicePrompt.settings_key(), "labs.voice_prompt");
+        assert_eq!(Feature::VoicePrompt.name(), "voice-prompt");
+        // A settings file from before the lab loads with the default phrase.
+        let old: LabsSettings = serde_json::from_str(r#"{"voice_prompt":true}"#).unwrap();
+        assert_eq!(old.voice_prompt_phrase, "rewrite this");
     }
 
     #[test]

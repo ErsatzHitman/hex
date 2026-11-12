@@ -736,6 +736,12 @@ fn rows(ui: &Ui) -> Vec<Row> {
         tr("Say \"comma\", \"colon\", \"hashtag\", \"underscore\", or \"slash\" to insert the symbol joined to its words"),
     ));
     rows.push(row(
+        Feature::VoicePrompt,
+        None,
+        tr("Voice prompt"),
+        tr("Say \"rewrite this\" and then what you want, such as \"make it formal\". Your OpenCode model follows it on what you said before and Hex pastes the result"),
+    ));
+    rows.push(row(
         Feature::FillerWords,
         None,
         tr("Remove filler words"),
@@ -933,6 +939,7 @@ fn row_key(lab: Lab) -> &'static str {
         Feature::TerminalPasteShortcut => "lab-terminal-paste-shortcut",
         Feature::SmartSpacing => "lab-smart-spacing",
         Feature::SpokenSymbols => "lab-spoken-symbols",
+        Feature::VoicePrompt => "lab-voice-prompt",
         Feature::PickerSortFilter => "lab-picker-sort-filter",
         Feature::SidedChords => "lab-sided-modifier-chords",
         Feature::TapOrHold => "lab-tap-or-hold",

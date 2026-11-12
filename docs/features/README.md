@@ -1266,6 +1266,8 @@ Foreground context -> Select processing
 Selected mode                            // replaces Global's rewrite and transformations
   -> Its vocabulary, then the shared one   // features/vocabulary.md (vocabulary.modes)
   -> Global's corrections, then the mode's  // every OS
+  -> Labs > Voice prompt said?           // "<text> rewrite this <prompt>" (labs.md)
+     -> yes: OpenCode applies <prompt> to <text>, in place of the rewrite below
   -> OpenCode transformation             // optional provider-backed rewrite
   -> Transformations                     // ordered text chain
   -> Paste or Send

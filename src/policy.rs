@@ -131,6 +131,11 @@ impl Policy {
         if feature == crate::labs::Feature::AnnotateReplay && self.locks(Lock::Annotate) {
             return Some(Lock::Annotate);
         }
+        // Voice prompt sends dictated text to OpenCode, so the lock that
+        // drops every OpenCode rewrite holds it off too.
+        if feature == crate::labs::Feature::VoicePrompt && self.locks(Lock::OpenCodeProcessing) {
+            return Some(Lock::OpenCodeProcessing);
+        }
         self.locks(Lock::Labs).then_some(Lock::Labs)
     }
 

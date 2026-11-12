@@ -647,6 +647,18 @@ pub(super) const KEYS: &[Key] = &[
          Resume; a restart starts unpaused (macOS)",
     ),
     key(
+        "labs.voice_prompt",
+        Kind::Bool,
+        "Labs: a dictation containing labs.voice_prompt_phrase sends the words said after it to \
+         the OpenCode model as a prompt, applied to the words said before it",
+    ),
+    key(
+        "labs.voice_prompt_phrase",
+        Kind::Text,
+        "Labs: the phrase Voice prompt listens for (\"rewrite this\" by default; at least two \
+         words and six letters)",
+    ),
+    key(
         "labs.print_start",
         Kind::Bool,
         "Labs: `hex dictation start --print` records a dictation whose transcript goes to \

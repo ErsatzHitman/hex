@@ -691,7 +691,7 @@ fn process_job_text(
     processing: impl FnOnce(),
 ) -> crate::dictation::processor::Processed {
     let profiles = profiles();
-    if profiles.processes(&job.context) {
+    if profiles.processes_transcript(&job.context, &job.text) {
         processing();
     }
     profiles.process_cancellable(

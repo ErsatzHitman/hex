@@ -57,6 +57,9 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 ├── Print-only CLI dictation no labs.print_start        (macOS)   hex dictation start --print answers with the transcript however the recording ends; never pasted or copied
 ├── Spoken formatting no labs.spoken_formatting      spoken "new line"/"line break", "new paragraph", "open/close quote", "quote … unquote" become line breaks and quotation marks; Spanish "nuevo párrafo", "nueva línea", "abre/cierra comillas", … too (#630, #1040)
 ├── Spoken symbols  no    labs.spoken_symbols          spoken "hashtag", "underscore", "comma", … become symbols joined to their words: "#release", "my_variable", "done, thanks"; Spanish "arroba", "guion bajo", "coma", … too (#678, #1040)
+├── Voice prompt    no    labs.voice_prompt + labs.voice_prompt_phrase ("rewrite this")
+│                                        the words said after the phrase go to the mode's OpenCode model as a prompt
+│                                        applied to the words said before it, and the answer is pasted
 ├── Remove filler words no labs.filler_words          English dictations lose um, umm, uh, uhh, erm, er, ah, with no model (#631)
 ├── Subtitle export no    labs.subtitle_export         (macOS)   hex meetings show --srt|--vtt writes a meeting as timed subtitles (#633)
 ├── Second dictation shortcut no labs.second_dictation_shortcut + second_dictation_hotkey
@@ -725,6 +728,47 @@ the tests in [dictation/spoken_symbols.rs](../../src/dictation/spoken_symbols.rs
 [panes.rs](../../src/rune_ui/tests/panes.rs). Not yet observed: a real
 dictation with the toggle on; the Labs page goldens need regenerating on
 Linux with the new row.
+
+Voice prompt (`voice-prompt`, every OS, Output group): while on,
+`Profiles::process_cancellable` in
+[dictation/processor.rs](../../src/dictation/processor.rs) reads
+`labs::voice_prompt_phrase()` as each heard dictation's processing starts
+(typed text never) and looks for `labs.voice_prompt_phrase` ("rewrite this"
+by default; `hex settings set labs.voice_prompt_phrase "…"` changes it) in
+the corrected transcript, after spoken formatting, spoken symbols, filler
+words, and corrections.
+
+```ts
+"<text> rewrite this <prompt>"          // dictation/voice_prompt.rs::detect
+├── Phrase not said -> the mode as usual (its rewrite, transformations)
+├── <text> + <prompt> -> OpenCode: apply <prompt> to <text> -> paste the answer
+├── <text>, nothing after -> OpenCode: rewrite <text> clearly and concisely
+├── <prompt>, nothing before -> OpenCode: write what <prompt> asks for
+├── Only the phrase (or "…, thanks") -> nothing pasted, no request
+└── Generation fails -> paste <text> (or, with none, the whole transcript)
+    and record the reason as the processing fallback
+Then the mode's transformations run on the result, as after a rewrite.
+```
+
+Matching is word aligned and ignores case, punctuation, hyphens, and
+apostrophes, with no fuzz ("overwrite this" and "write this" never match).
+When the phrase is said more than once, the last time splits the
+dictation. Connectives that lead into the phrase ("…, and then rewrite this")
+and out of it ("rewrite this, and make it formal") are dropped, as is
+politeness alone after it. A phrase needs two words and six letters (a CJK
+character counts as two) and at most 80 characters; an unusable one leaves
+the lab off. The request replaces the mode's own rewrite (one round trip)
+and uses the mode's model and deadline; with the mode's rewrite on, its
+instructions go along as background that the spoken prompt overrides. The
+managed `DisableOpenCodeProcessing` lock holds the lab off. Ported from
+OpenTalk's voice rewrite. Checks: the tests in
+[dictation/voice_prompt.rs](../../src/dictation/voice_prompt.rs); the
+`voice_prompt_*`, `a_failed_voice_prompt_pastes_the_text_without_the_prompt`,
+and `typed_text_never_runs_a_voice_prompt` tests in
+[dictation/processor.rs](../../src/dictation/processor.rs) with an injected
+generation; `voice_prompt_holds_its_phrase_and_is_on_every_os` in
+[labs.rs](../../src/labs.rs). Not yet observed: a real dictation against a
+live OpenCode service.
 
 Remove filler words (`filler-words`, issue 631, every OS): while on,
 `Profiles::process_cancellable` in

@@ -208,6 +208,9 @@ impl Feature {
             Self::PrintStart => {
                 "Let hex dictation start --print hand the transcript to the command that started it, however the recording ends"
             }
+            Self::VoicePrompt => {
+                "Say \"rewrite this\" and then what you want: the words after it are sent as a prompt to your OpenCode model, which rewrites what you said before it"
+            }
         }
     }
 }

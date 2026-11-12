@@ -1271,6 +1271,8 @@ const TRANSLATIONS: &[(&str, &str)] = &[
     ("Delete {} dictations", "Удалить диктовки: {}"),
     ("Print-only CLI dictation", "Диктовка CLI только для печати"),
     ("Let hex dictation start --print answer with the transcript when it ends", "Позволяет hex dictation start --print получить транскрипт по завершении"),
+    ("Voice prompt", "Голосовой запрос"),
+    ("Say \"rewrite this\" and then what you want, such as \"make it formal\". Your OpenCode model follows it on what you said before and Hex pastes the result", "Скажите \"rewrite this\", а затем что нужно, например \"make it formal\". Ваша модель OpenCode применит это к сказанному ранее, и Hex вставит результат"),
 ];
 
 #[cfg(test)]
