@@ -228,6 +228,7 @@ const PATHS: &[(&str, &str)] = &[
     ("mac-labs-link", "Window/General/Labs link"),
     ("mac-labs-on", "Window/General/Labs turned on"),
     ("mac-labs-screenshots", "Window/General/Labs screenshots"),
+    ("mac-labs-voice-prompt", "Window/General/Labs voice prompt"),
     ("mac-labs-category", "Window/General/Labs category"),
     ("mac-labs-search", "Window/General/Labs search"),
     ("mac-labs-settings", "Window/General/Labs settings"),

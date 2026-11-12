@@ -1270,6 +1270,8 @@ const TRANSLATIONS: &[(&str, &str)] = &[
     ("Let hex dictation start --print answer with the transcript when it ends", "Permite que hex dictation start --print receba a transcrição ao terminar"),
     ("Voice prompt", "Prompt por voz"),
     ("Say \"rewrite this\" plus an instruction, like \"make it formal\", for your OpenCode model", "Diga \"rewrite this\" e uma instrução, como \"make it formal\", para seu modelo do OpenCode"),
+    ("Phrase", "Frase"),
+    ("Use at least two words and six letters", "Use pelo menos duas palavras e seis letras"),
 ];
 
 #[cfg(test)]

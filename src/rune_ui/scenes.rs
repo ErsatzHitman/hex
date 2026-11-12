@@ -729,6 +729,12 @@ pub(super) const SCENES: &[Scene] = &[
         ui.settings.labs.screenshots = true;
         ui.lab_store.group = Some(crate::labs::Feature::Screenshots.group());
     }),
+    // Labs › Voice prompt's card while on, with its phrase field.
+    ("mac-labs-voice-prompt", |ui| {
+        labs_with_some_on(ui);
+        ui.settings.labs.voice_prompt = true;
+        ui.lab_store.group = Some(crate::labs::Feature::VoicePrompt.group());
+    }),
     // Labs on Windows and Linux: only their OS's labs, groups holding a
     // lab that's on open.
     ("windows-labs", |ui| {

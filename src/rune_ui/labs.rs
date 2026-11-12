@@ -1082,6 +1082,7 @@ fn extras(ui: &Ui, p: Paint, entry: &Row, layer: &mut Vec<El>) -> Option<El> {
                 )
                 .child(caps_lock_light(ui, p)),
         ),
+        Lab::Feature(Feature::VoicePrompt) => Some(voice_prompt_phrase(ui, p)),
         Lab::Feature(Feature::Appearance) => Some(
             row()
                 .key("appearance-theme-row")
@@ -1104,6 +1105,68 @@ fn extras(ui: &Ui, p: Paint, entry: &Row, layer: &mut Vec<El>) -> Option<El> {
         )),
         _ => None,
     }
+}
+
+/// Labs › Voice prompt's phrase, typed on its card. An empty field means
+/// the default phrase; a phrase too short to use stays a draft, with the
+/// reason under the field, and the saved one keeps working.
+fn voice_prompt_phrase(ui: &Ui, p: Paint) -> El {
+    let field = rune_kit::TextInput::new(&ui.voice_prompt_phrase)
+        .placeholder(crate::dictation::voice_prompt::DEFAULT_PHRASE)
+        .width(Some(VOICE_PROMPT_FIELD_WIDTH))
+        .on_edit(|ui: &mut Ui| &mut ui.voice_prompt_phrase)
+        .build(p.k)
+        .key("voice-prompt-phrase");
+    let phrase = row()
+        .key("voice-prompt-phrase-row")
+        .gap(8.0)
+        .center_y()
+        .flex_wrap()
+        .child(
+            text(tr("Phrase"))
+                .key("label")
+                .font(controls::DESCRIPTION)
+                .color(p.muted()),
+        )
+        .child(field);
+    if voice_prompt_phrase_usable(&ui.voice_prompt_phrase.text) {
+        return phrase;
+    }
+    rune::col()
+        .key("voice-prompt-phrase-body")
+        .gap(4.0)
+        .child(phrase)
+        .child(
+            text(tr("Use at least two words and six letters"))
+                .key("voice-prompt-phrase-error")
+                .font(controls::DESCRIPTION)
+                .color(p.danger()),
+        )
+}
+
+const VOICE_PROMPT_FIELD_WIDTH: f32 = 180.0;
+
+/// Whether the phrase typed on the card can be saved: empty (the default)
+/// or two words and six letters.
+fn voice_prompt_phrase_usable(typed: &str) -> bool {
+    typed.trim().is_empty() || crate::dictation::voice_prompt::Trigger::new(typed).is_some()
+}
+
+/// The phrase draft applied to `settings`: an empty field saves the default,
+/// an unusable one leaves the saved phrase as it is.
+pub(super) fn project_voice_prompt_phrase(
+    draft: &TextEdit,
+    settings: &mut crate::app_settings::AppSettings,
+) {
+    let typed = draft.text.trim();
+    if !voice_prompt_phrase_usable(typed) {
+        return;
+    }
+    settings.labs.voice_prompt_phrase = if typed.is_empty() {
+        crate::dictation::voice_prompt::DEFAULT_PHRASE.to_owned()
+    } else {
+        typed.to_owned()
+    };
 }
 
 /// Whether the Caps Lock light stays solid or blinks slowly while recording.

@@ -661,6 +661,8 @@ pub(crate) struct Ui {
     labs_open: bool,
     /// The Labs store's search, tab, and chip.
     lab_store: labs::Store,
+    /// Labs › Voice prompt's phrase, a draft saved when typing pauses.
+    voice_prompt_phrase: TextEdit,
     /// A scene previewing the badge of a build kind this binary is not.
     build_preview: Option<BuildKind>,
     capture: Capture,
@@ -707,6 +709,7 @@ pub(crate) struct Ui {
 struct Drafts {
     modes: bool,
     vocabulary: bool,
+    voice_prompt_phrase: bool,
 }
 
 impl Ui {
@@ -761,6 +764,7 @@ impl Ui {
     fn with(settings: AppSettings, service: Service) -> Self {
         let modes = modes::ModesPane::new(&settings);
         let vocabulary = vocabulary::VocabularyEditor::new(&settings.vocabulary);
+        let voice_prompt_phrase = TextEdit::new(settings.labs.voice_prompt_phrase.clone());
         Self {
             settings,
             #[cfg(test)]
@@ -782,6 +786,7 @@ impl Ui {
             advanced: Vec::new(),
             labs_open: false,
             lab_store: labs::Store::default(),
+            voice_prompt_phrase,
             build_preview: None,
             capture: Capture::Idle,
             vocabulary,
@@ -885,6 +890,7 @@ impl Ui {
         let mut candidate = self.settings.clone();
         self.modes.project(&mut candidate);
         candidate.vocabulary = self.vocabulary.project();
+        labs::project_voice_prompt_phrase(&self.voice_prompt_phrase, &mut candidate);
         candidate
     }
 
@@ -893,9 +899,12 @@ impl Ui {
         let settings = &self.settings;
         let mut modes = settings.clone();
         self.modes.project(&mut modes);
+        let mut labs = settings.clone();
+        labs::project_voice_prompt_phrase(&self.voice_prompt_phrase, &mut labs);
         Drafts {
             modes: modes.dictation_processing != settings.dictation_processing,
             vocabulary: self.vocabulary.project() != settings.vocabulary,
+            voice_prompt_phrase: labs.labs.voice_prompt_phrase != settings.labs.voice_prompt_phrase,
         }
     }
 
@@ -1069,6 +1078,11 @@ impl Ui {
             }
             if !drafts.vocabulary && service.vocabulary != self.settings.vocabulary {
                 self.vocabulary.reload(&service.vocabulary);
+            }
+            if !drafts.voice_prompt_phrase
+                && service.labs.voice_prompt_phrase != self.settings.labs.voice_prompt_phrase
+            {
+                self.voice_prompt_phrase = TextEdit::new(service.labs.voice_prompt_phrase.clone());
             }
             self.settings = service.clone();
             self.settings_changed();

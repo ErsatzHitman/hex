@@ -59,7 +59,8 @@ Feature             Pane  Toggle (settings.json, hex settings)   On: what it doe
 ├── Spoken symbols  no    labs.spoken_symbols          spoken "hashtag", "underscore", "comma", … become symbols joined to their words: "#release", "my_variable", "done, thanks"; Spanish "arroba", "guion bajo", "coma", … too (#678, #1040)
 ├── Voice prompt    no    labs.voice_prompt + labs.voice_prompt_phrase ("rewrite this")
 │                                        the words said after the phrase go to the mode's OpenCode model as a prompt
-│                                        applied to the words said before it, and the answer is pasted
+│                                        applied to the words said before it, and the answer is pasted;
+│                                        the card shows a Phrase field while on
 ├── Remove filler words no labs.filler_words          English dictations lose um, umm, uh, uhh, erm, er, ah, with no model (#631)
 ├── Subtitle export no    labs.subtitle_export         (macOS)   hex meetings show --srt|--vtt writes a meeting as timed subtitles (#633)
 ├── Second dictation shortcut no labs.second_dictation_shortcut + second_dictation_hotkey
@@ -734,7 +735,8 @@ Voice prompt (`voice-prompt`, every OS, Output group): while on,
 [dictation/processor.rs](../../src/dictation/processor.rs) reads
 `labs::voice_prompt_phrase()` as each heard dictation's processing starts
 (typed text never) and looks for `labs.voice_prompt_phrase` ("rewrite this"
-by default; `hex settings set labs.voice_prompt_phrase "…"` changes it) in
+by default; the card's Phrase field while the lab is on, or
+`hex settings set labs.voice_prompt_phrase "…"`, changes it) in
 the corrected transcript, after spoken formatting, spoken symbols, filler
 words, and corrections.
 
@@ -757,7 +759,12 @@ dictation. Connectives that lead into the phrase ("…, and then rewrite this")
 and out of it ("rewrite this, and make it formal") are dropped, as is
 politeness alone after it. A phrase needs two words and six letters (a CJK
 character counts as two) and at most 80 characters; an unusable one leaves
-the lab off. The request replaces the mode's own rewrite (one round trip)
+the lab off. The card's field saves when typing pauses, like Modes'
+fields: empty saves the default, and a phrase too short to use stays a
+draft with "Use at least two words and six letters" under it while the
+saved phrase keeps working (`voice_prompt_phrase_saves_from_its_card` in
+[panes.rs](../../src/rune_ui/tests/panes.rs); scene
+`mac-labs-voice-prompt`). The request replaces the mode's own rewrite (one round trip)
 and uses the mode's model and deadline; with the mode's rewrite on, its
 instructions go along as background that the spoken prompt overrides. The
 managed `DisableOpenCodeProcessing` lock holds the lab off. Ported from

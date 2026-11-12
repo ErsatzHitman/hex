@@ -400,6 +400,48 @@ fn the_browser_labs_toggle_turns_on_and_asks_for_system_audio() {
 }
 
 #[test]
+fn voice_prompt_phrase_saves_from_its_card() {
+    let mut rt = runtime("mac-settings", true, (980.0, 2400.0));
+    open_labs(&mut rt);
+    assert!(
+        rt.find("voice-prompt-phrase").is_none(),
+        "only while the lab is on"
+    );
+    tap(&mut rt, "lab-voice-prompt");
+    assert!(rt.state.settings.labs.voice_prompt);
+    assert!(rt.find("voice-prompt-phrase").is_some());
+    assert_eq!(rt.state.voice_prompt_phrase.text, "rewrite this");
+    let retype = |rt: &mut Runtime<Ui>, typed: &str| {
+        tap(rt, "voice-prompt-phrase");
+        let mut field = TextEdit::default();
+        field.focused = true;
+        rt.state.voice_prompt_phrase = field;
+        if !typed.is_empty() {
+            rt.paste(typed);
+        }
+        settle(rt);
+        flush(rt);
+    };
+    retype(&mut rt, "Hey Hex, fix this");
+    assert_eq!(
+        rt.state.settings.labs.voice_prompt_phrase,
+        "Hey Hex, fix this"
+    );
+    assert!(rt.find("voice-prompt-phrase-error").is_none());
+    // Too short to use: the reason shows and the saved phrase keeps working.
+    retype(&mut rt, "fix");
+    assert!(rt.find("voice-prompt-phrase-error").is_some());
+    assert_eq!(
+        rt.state.settings.labs.voice_prompt_phrase,
+        "Hey Hex, fix this"
+    );
+    // Empty means the default.
+    retype(&mut rt, "");
+    assert!(rt.find("voice-prompt-phrase-error").is_none());
+    assert_eq!(rt.state.settings.labs.voice_prompt_phrase, "rewrite this");
+}
+
+#[test]
 fn contributed_options_are_labs_toggles_off_by_default() {
     let mut rt = runtime("mac-settings", true, (980.0, 2400.0));
     open_labs(&mut rt);
