@@ -544,6 +544,9 @@ fn voice_prompted_with(
         ),
     );
     let (generated, observation) = generate(&request);
+    let generated = generated
+        .map(|text| text.trim().to_owned())
+        .filter(|text| !text.is_empty());
     match &observation.fallback {
         None => tracing::info!(
             profile = profile.name,

@@ -739,7 +739,7 @@ fn rows(ui: &Ui) -> Vec<Row> {
         Feature::VoicePrompt,
         None,
         tr("Voice prompt"),
-        tr("Say \"rewrite this\" and then what you want, such as \"make it formal\". Your OpenCode model follows it on what you said before and Hex pastes the result"),
+        tr("Say \"rewrite this\" plus an instruction, like \"make it formal\", for your OpenCode model"),
     ));
     rows.push(row(
         Feature::FillerWords,

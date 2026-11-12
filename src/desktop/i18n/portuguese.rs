@@ -1269,7 +1269,7 @@ const TRANSLATIONS: &[(&str, &str)] = &[
     ("Print-only CLI dictation", "Ditado de CLI só para impressão"),
     ("Let hex dictation start --print answer with the transcript when it ends", "Permite que hex dictation start --print receba a transcrição ao terminar"),
     ("Voice prompt", "Prompt por voz"),
-    ("Say \"rewrite this\" and then what you want, such as \"make it formal\". Your OpenCode model follows it on what you said before and Hex pastes the result", "Diga \"rewrite this\" e depois o que quer, como \"make it formal\". Seu modelo do OpenCode aplica isso ao que você disse antes e o Hex cola o resultado"),
+    ("Say \"rewrite this\" plus an instruction, like \"make it formal\", for your OpenCode model", "Diga \"rewrite this\" e uma instrução, como \"make it formal\", para seu modelo do OpenCode"),
 ];
 
 #[cfg(test)]
